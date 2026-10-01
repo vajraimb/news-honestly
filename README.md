@@ -7,3 +7,5 @@
 仓库：https://github.com/vajraimb/news-honestly
 
 工作日 09:00（北京时间）简报会同步更新本站 `data/briefs.json`。
+
+Pages: GitHub Actions
