@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="News Honestly — 事实 · 双解读 · 分歧 · 综合" />
+  <title>News Honestly</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <h1 id="site-title">News Honestly</h1>
+        <p class="subtitle" id="site-subtitle">事实 · 双解读 · 分歧 · 综合</p>
+      </div>
+      <div class="date-bar" id="date-bar" aria-label="简报日期">
+        <span class="date-bar-label">日期</span>
+      </div>
+      <nav class="view-tabs" role="tablist">
+        <button type="button" class="view-tab active" data-view="stories" role="tab" aria-selected="true">故事卡片</button>
+        <button type="button" class="view-tab" data-view="index" role="tab" aria-selected="false">头条索引</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+    <div id="status" class="status-msg">加载中…</div>
+
+    <div id="content" class="hidden">
+      <section class="day-meta" id="day-meta"></section>
+
+      <section class="stories-panel" id="stories-panel">
+        <div class="card-grid" id="card-grid"></div>
+      </section>
+
+      <section class="index-panel" id="index-panel">
+        <ul class="index-list" id="index-list"></ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>News Honestly — 每日新闻分析卡片 · 纯静态站点</p>
+  </footer>
+
+  <!-- Embed fallback for file:// ; HTTP prefers fetch of briefs.json -->
+  <script src="data/briefs.embed.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
