@@ -1,0 +1,45 @@
+name: Enable GitHub Pages
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/enable-pages.yml'
+
+permissions:
+  pages: write
+  contents: read
+  id-token: write
+
+jobs:
+  enable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create or update Pages (Actions source)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o /tmp/pages_out.json -w "%{http_code}" \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/pages" \
+            -d '{"build_type":"workflow"}') || true
+          echo "POST status=$code"
+          cat /tmp/pages_out.json || true
+          if [ "$code" = "409" ] || [ "$code" = "422" ]; then
+            code2=$(curl -sS -o /tmp/pages_put.json -w "%{http_code}" \
+              -X PUT \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${{ github.repository }}/pages" \
+              -d '{"build_type":"workflow"}') || true
+            echo "PUT status=$code2"
+            cat /tmp/pages_put.json || true
+          fi
+          curl -sS -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/pages" || true
