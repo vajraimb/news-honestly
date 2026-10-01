@@ -6,44 +6,16 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
-  assemble:
-    runs-on: ubuntu-latest
-    outputs:
-      has_changes: ${{ steps.commit.outputs.has_changes }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Assemble briefs data
-        run: python3 scripts/assemble_briefs.py
-
-      - name: Commit assembled data if needed
-        id: commit
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/briefs.json data/briefs.embed.js
-          if git diff --staged --quiet; then
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
-            echo "No data changes to commit"
-          else
-            git commit -m "Assemble briefs.json and briefs.embed.js from parts"
-            git push
-            echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          fi
-
   deploy:
-    needs: assemble
-    if: needs.assemble.outputs.has_changes != 'true'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
