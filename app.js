@@ -1,3 +1,4 @@
+/* Honewstly — client app */
 (function () {
   "use strict";
 
@@ -12,19 +13,24 @@
   const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
 
   async function loadData() {
-
     try {
-      const res = await fetch("data/briefs.json", { cache: "no-store" });
-      if (res.ok) {
-        return await res.json();
-      }
+      const res = await fetch("data/briefs.json", { cache: "default" });
+      if (res.ok) return await res.json();
     } catch (_) {
-
+      /* network / file:// */
     }
-    if (window.BRIEFS_DATA) {
-      return window.BRIEFS_DATA;
+    // Optional embed fallback (not loaded by default — keeps first paint fast)
+    if (!window.BRIEFS_DATA) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "data/briefs.embed.js";
+        s.onload = resolve;
+        s.onerror = () => reject(new Error("embed load failed"));
+        document.head.appendChild(s);
+      }).catch(() => {});
     }
-    throw new Error("无法加载 briefs 数据。请用本地 HTTP 服务打开，或确保 data/briefs.embed.js 存在。");
+    if (window.BRIEFS_DATA) return window.BRIEFS_DATA;
+    throw new Error("无法加载 briefs 数据。");
   }
 
   function tagChipClass(tag) {
@@ -46,10 +52,10 @@
 
   function escapeHtml(str) {
     return String(str)
-      .replace(/&/g, "&")
-      .replace(/</g, "<")
-      .replace(/>/g, ">")
-      .replace(/"/g, """);
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
   }
 
   function formatDateLabel(iso) {
@@ -117,7 +123,7 @@
     return (
       "<ul class='facts-preview'>" +
       items.map((f) => `<li>${escapeHtml(f)}</li>`).join("") +
-      (facts.length > 3 ? `<li style=\"list-style:none;color:var(--text-muted);padding-left:0;margin-left:-1.1rem\">…另有 ${facts.length - 3} 条</li>` : "") +
+      (facts.length > 3 ? `<li style="list-style:none;color:var(--text-muted);padding-left:0;margin-left:-1.1rem">…另有 ${facts.length - 3} 条</li>` : "") +
       "</ul>"
     );
   }
@@ -125,9 +131,9 @@
   function sectionBlock(label, contentHtml) {
     if (!contentHtml) return "";
     return (
-      `<div class=\"section\">` +
-      `<div class=\"section-label\">${escapeHtml(label)}</div>` +
-      `<div class=\"section-content\">${contentHtml}</div>` +
+      `<div class="section">` +
+      `<div class="section-label">${escapeHtml(label)}</div>` +
+      `<div class="section-content">${contentHtml}</div>` +
       `</div>`
     );
   }
@@ -140,10 +146,10 @@
 
     const chips = [];
     if (tag) {
-      chips.push(`<span class=\"chip ${tagChipClass(tag)}\">${escapeHtml(tag)}</span>`);
+      chips.push(`<span class="chip ${tagChipClass(tag)}">${escapeHtml(tag)}</span>`);
     }
     if (conf) {
-      chips.push(`<span class=\"chip ${confChipClass(conf)}\">置信度 ${escapeHtml(conf)}</span>`);
+      chips.push(`<span class="chip ${confChipClass(conf)}">置信度 ${escapeHtml(conf)}</span>`);
     }
 
     const factsList =
@@ -153,10 +159,10 @@
 
     const sourcesHtml =
       (story.sources || []).length > 0
-        ? `<ul class=\"sources-list\">${story.sources
+        ? `<ul class="sources-list">${story.sources
             .map(
               (s) =>
-                `<li><a href=\"${escapeHtml(s.url)}\" target=\"_blank\" rel=\"noopener noreferrer\">${escapeHtml(
+                `<li><a href="${escapeHtml(s.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(
                   s.label || s.url
                 )}</a></li>`
             )
@@ -174,20 +180,20 @@
       sectionBlock("SOURCES", sourcesHtml);
 
     return `
-      <article class=\"story-card${expanded ? \" expanded\" : \"\"}\" data-key=\"${escapeHtml(key)}\" data-id=\"${escapeHtml(String(story.id))}\">
-        <div class=\"card-header\" data-toggle=\"1\">
-          <div class=\"card-top\">
-            <span class=\"card-num\">${escapeHtml(String(story.id))}</span>
-            <h3 class=\"card-title\">${escapeHtml(story.title)}</h3>
+      <article class="story-card${expanded ? " expanded" : ""}" data-key="${escapeHtml(key)}" data-id="${escapeHtml(String(story.id))}">
+        <div class="card-header" data-toggle="1">
+          <div class="card-top">
+            <span class="card-num">${escapeHtml(String(story.id))}</span>
+            <h3 class="card-title">${escapeHtml(story.title)}</h3>
           </div>
-          <div class=\"chips\">${chips.join("")}</div>
-          <div class=\"facts-preview-wrap\">${previewFacts(story.facts)}</div>
+          <div class="chips">${chips.join("")}</div>
+          <div class="facts-preview-wrap">${previewFacts(story.facts)}</div>
         </div>
-        <div class=\"card-actions\">
-          <button type=\"button\" class=\"expand-btn\" data-toggle=\"1\">${expanded ? "收起" : "展开"}</button>
-          <span class=\"expand-hint\">${expanded ? "点击收起完整分析" : "FACTS · 双解读 · 分歧 · 综合"}</span>
+        <div class="card-actions">
+          <button type="button" class="expand-btn" data-toggle="1">${expanded ? "收起" : "展开"}</button>
+          <span class="expand-hint">${expanded ? "点击收起完整分析" : "FACTS · 双解读 · 分歧 · 综合"}</span>
         </div>
-        <div class=\"card-body\">${body}</div>
+        <div class="card-body">${body}</div>
       </article>
     `;
   }
@@ -198,16 +204,16 @@
 
     grid.querySelectorAll("[data-toggle]").forEach((el) => {
       el.addEventListener("click", (e) => {
-
+        // Don't toggle when clicking links inside (none in header, but safe)
         if (e.target.closest("a")) return;
         const card = el.closest(".story-card");
         if (!card) return;
         const key = card.dataset.key;
         if (state.expanded.has(key)) state.expanded.delete(key);
         else state.expanded.add(key);
-
+        // Re-render only this brief's cards to keep scroll-ish simple
         renderCards(currentBrief());
-
+        // Keep expanded card in view
         const fresh = grid.querySelector(`[data-key="${CSS.escape(key)}"]`);
         if (fresh && state.expanded.has(key)) {
           fresh.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -220,19 +226,19 @@
     const list = $("#index-list");
     const items = brief.index || [];
     if (!items.length) {
-      list.innerHTML = `<li class=\"index-item\"><span class=\"index-n\">—</span><span class=\"index-title\">本日暂无索引</span></li>`;
+      list.innerHTML = `<li class="index-item"><span class="index-n">—</span><span class="index-title">本日暂无索引</span></li>`;
       return;
     }
     list.innerHTML = items
       .map((item) => {
         const title = item.url
-          ? `<a href=\"${escapeHtml(item.url)}\" target=\"_blank\" rel=\"noopener noreferrer\">${escapeHtml(item.title)}</a>`
+          ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a>`
           : escapeHtml(item.title);
         return `
-          <li class=\"index-item\">
-            <span class=\"index-n\">${escapeHtml(String(item.n))}</span>
-            <span class=\"index-title\">${title}</span>
-            <span class=\"index-outlet\">${escapeHtml(item.outlet || "")}</span>
+          <li class="index-item">
+            <span class="index-n">${escapeHtml(String(item.n))}</span>
+            <span class="index-title">${title}</span>
+            <span class="index-outlet">${escapeHtml(item.outlet || "")}</span>
           </li>`;
       })
       .join("");
@@ -275,9 +281,9 @@
     try {
       state.data = await loadData();
       if (state.data.site) {
-        $("#site-title").textContent = state.data.site.title || "News Honestly";
+        $("#site-title").textContent = state.data.site.title || "Honewstly";
         $("#site-subtitle").textContent = state.data.site.subtitle || "";
-        document.title = state.data.site.title || "News Honestly";
+        document.title = state.data.site.title || "Honewstly";
       }
       if (!state.data.briefs || !state.data.briefs.length) {
         throw new Error("briefs 数组为空");
